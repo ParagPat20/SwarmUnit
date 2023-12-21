@@ -1,6 +1,8 @@
 import zmq
 import time
 import threading
+import tkintermapview
+import tkinter
 
 MCU_host = '192.168.207.122'
 CD1_host = '192.168.207.43'
@@ -13,7 +15,8 @@ context = zmq.Context()  # Create a ZeroMQ context
 connected_hosts = set()
 clients = {}
 pc = '192.168.207.101'
-
+coordslat = 0.0
+coordslon = 0.0
 import random
 
 def send(host, immediate_command_str):
@@ -72,7 +75,7 @@ def recv_status(remote_host,status_port, param=None):
                 
 def send_ctrl(cmd):
     global selected_drone
-    Velocity = 0.2
+    Velocity = 0.5
     x = '0'
     y = '0'
     z = '0'
@@ -85,9 +88,9 @@ def send_ctrl(cmd):
     elif cmd == 'd':
         y = str(-Velocity)
     if cmd == 'u':
-        z = str(-Velocity)
+        z = str(-0.2)
     elif cmd == 'j':
-        z = str(Velocity)
+        z = str(0.2)
 
     logger.log("Selected_Drone is : {}".format(selected_drone))
 
@@ -238,6 +241,13 @@ class Logger:
                 message = socket.recv_string()
                 if message.startswith("sec "):
                     logger.log_sec(message[4:])
+                elif message.startswith("lat "):
+                    coordslat = message[4:]
+                    coordslat = float(coordslat)
+                    logger.log_sec(coordslat)
+                elif message.startswith("lon "):
+                    coordslon = float(message[4:])
+                    logger.log_sec(coordslon)
                 else:
                     logger.log(message)
         except KeyboardInterrupt:
@@ -248,3 +258,38 @@ class Logger:
 
 
 logger = Logger()
+class MapApplication():
+    def __init__(self, root):
+        #self.root = root
+        global coordslat
+        global coordslon
+    
+        self.map_widget = tkintermapview.TkinterMapView(root)
+        self.map_widget.place(relx=0.5, rely=0.5, anchor=tkinter.CENTER)
+        self.coords = (coordslat,coordslon)
+        print(coordslat)
+        print(coordslon)
+        logger.log_sec(str(self.coords))
+        self.map_widget.set_position(self.coords[0], self.coords[1])
+        self.map_widget.set_zoom(15)
+        
+        given_coordinates = [
+        {"coords": self.coords, "label": "Drone 1"}
+        ]
+
+        # Function to add marker to the map at given coordinates with labels
+        def add_given_markers():
+            for data in given_coordinates:
+                coords = data["coords"]
+                label = data["label"]
+                self.map_widget.set_marker(coords[0], coords[1], text=label)
+                print(coords)
+
+        # Adding right-click event to the map
+        self.map_widget.add_right_click_menu_command(label="Add Given Markers",
+                                        command=add_given_markers)
+
+
+
+        #clear_button = tkinter.Button(root, text="Clear Markers", command=self.clear_markers)
+        #clear_button.pack()

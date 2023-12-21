@@ -5,7 +5,7 @@ from control import Control
 from Initialization import Initialize
 from formation import Formation
 import login
-from saves import logger
+from saves import logger, MapApplication
 from saves import *
 
 OUTPUT_PATH = Path(__file__).parent
@@ -26,22 +26,22 @@ class MainWindow(Toplevel):
         self.title("SwarmUnit")
 
         self.geometry("1500x760+5+0")
-        self.configure(bg = "#5E95FF")
+        self.configure(bg="#5E95FF")
 
         self.current_window = None
         self.current_window_label = StringVar()
 
         self.canvas = Canvas(
             self,
-            bg = "#5E95FF",
-            height = 760,
-            width = 1500,
-            bd = 0,
-            highlightthickness = 0,
-            relief = "ridge"
+            bg="#5E95FF",
+            height=760,
+            width=1500,
+            bd=0,
+            highlightthickness=0,
+            relief="ridge"
         )
 
-        self.canvas.place(x = 0, y = 0)
+        self.canvas.place(x=0, y=0)
 
         self.canvas.create_rectangle(
             200.0,
@@ -49,8 +49,8 @@ class MainWindow(Toplevel):
             1500.0,
             760.0,
             fill="#FFFFFF",
-            outline="")
-        
+            outline=""
+        )
 
         self.canvas.create_text(
             20.0,
@@ -161,17 +161,17 @@ class MainWindow(Toplevel):
             fill="#EFEFEF",
             outline="")
         
-        self.log_text_sec = Text(
-            self.canvas,
-            wrap="word",
-            font=("Montserrat Bold", 20),
-            bg="#000000",
-            relief="flat",
-            state="disabled"
-        )
-        self.log_text_sec.place(x=249.0, y=42.0, width=300.0, height=300.0)
-        logger.set_log_text_sec(self.log_text_sec)
         
+        self.canvas.create_rectangle(
+            249.0,
+            42.0,
+            549.0,
+            342.0,
+            fill="#EFEFEF",
+            outline="")
+        
+        self.map_app = MapApplication(self)
+        self.map_app.map_widget.place(x=-350.0, y=-190.0, width=295.0, height=295.0)
 
         self.canvas.create_rectangle(
             587.0,
@@ -190,6 +190,17 @@ class MainWindow(Toplevel):
             state="disabled"
         )
         self.log_text.place(x=587.0, y=119.0, width=889.0, height=223.0)
+
+        self.log_text_sec = Text(
+            self.canvas,
+            wrap="word",
+            font=("Montserrat Bold", 20),
+            bg="#FFFF00",
+            relief="flat",
+            state="disabled"
+        )
+        self.log_text_sec.place(x=1185.0, y=42.0, width=300.0, height=300.0)
+        logger.set_log_text_sec(self.log_text_sec)
 
         # Pass the log_text to the logger
         logger.set_log_text(self.log_text)

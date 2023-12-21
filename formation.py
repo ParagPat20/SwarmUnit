@@ -259,6 +259,124 @@ class Formation(Frame):
             font=("Montserrat Bold", 24 * -1)
         )
 
+        self.pidx = Entry(
+            self.canvas,
+            bd=0,
+            bg="#D4D4D4",
+            fg="#000716",
+            highlightthickness=0,
+            font=("Montserrat Bold", 20 * -1)
+        )
+        self.pidx.place(
+            x=316.9276123046875,
+            y=352.0,
+            width=150.144775390625,
+            height=21.855224609375
+        )
+
+        self.pidx_btn = Button(
+            self.canvas,
+            bd=0,
+            bg="#FF0000",
+            fg="#0000FF",
+            text="PIDX",
+            font=("Montserrat Bold", 20 * -1),
+            command=lambda: self.pidx_set()
+        )
+        self.pidx_btn.place(
+            x=316.9276123046875,
+            y=320.0,
+            width=150.144775390625,
+            height=21.855224609375
+        )
+
+        self.pidy = Entry(
+            self.canvas,
+            bd=0,
+            bg="#D4D4D4",
+            fg="#000716",
+            highlightthickness=0,
+            font = ("Montserrat Bold", 20 * -1)
+        )
+        self.pidy.place(
+            x=480.9276123046875,
+            y=352.0,
+            width=150.144775390625,
+            height=21.855224609375
+        )
+
+        self.pidy_btn = Button(
+            self.canvas,
+            bd=0,
+            bg="#FF0000",
+            fg="#0000FF",
+            text="PIDY",
+            font=("Montserrat Bold", 20 * -1),
+            command=lambda: self.pidy_set()
+        )
+        self.pidy_btn.place(
+            x=480.9276123046875,
+            y=320.0,
+            width=150.144775390625,
+            height=21.855224609375
+        )
+
+        self.pidz = Entry(
+            self.canvas,
+            bd=0,
+            bg="#D4D4D4",
+            fg="#000716",
+            highlightthickness=0,
+            font = ("Montserrat Bold", 20 * -1)
+        )
+        self.pidz.place(
+            x=680.9276123046875,
+            y=352.0,
+            width=150.144775390625,
+            height=21.855224609375
+        )
+
+        self.pidz_btn = Button(
+            self.canvas,
+            bd=0,
+            bg="#FF0000",
+            fg="#0000FF",
+            text="PIDZ",
+            font=("Montserrat Bold", 20 * -1),
+            command=lambda: self.pidz_set()
+        )
+        self.pidz_btn.place(
+            x=680.9276123046875,
+            y=320.0,
+            width=150.144775390625,
+            height=21.855224609375
+        )
+
+    def pidx_set(self):
+        pid = str(self.pidx.get())
+        p, i, d = pid.split(',')
+        send(CD1_host, "CD1.pid_velx['P']={}".format(p))
+        send(CD1_host, "CD1.pid_velx['I']={}".format(i))
+        send(CD1_host, "CD1.pid_velx['D']={}".format(d))
+        send(CD1_host,"log(CD1.pid_velx)")
+
+    def pidy_set(self):
+        pid = str(self.pidy.get())
+        p, i, d = pid.split(',')
+        send(CD1_host, "CD1.pid_vely['P']={}".format(p))
+        send(CD1_host, "CD1.pid_vely['I']={}".format(i))
+        send(CD1_host, "CD1.pid_vely['D']={}".format(d))
+        send(CD1_host,"log(CD1.pid_vely)")
+
+    def pidz_set(self):
+        pid = str(self.pidz.get())
+        p, i, d = pid.split(',')
+        send(CD1_host, "CD1.pid_velz['P']={}".format(p))
+        send(CD1_host, "CD1.pid_velz['I']={}".format(i))
+        send(CD1_host, "CD1.pid_velz['D']={}".format(d))
+        send(CD1_host,"log(CD1.pid_velz)")
+
+
     # def custom_goto(self):
 
     #     try:
