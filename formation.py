@@ -355,26 +355,26 @@ class Formation(Frame):
     def pidx_set(self):
         pid = str(self.pidx.get())
         p, i, d = pid.split(',')
-        send(CD1_host, "CD1.pid_velx['P']={}".format(p))
-        send(CD1_host, "CD1.pid_velx['I']={}".format(i))
-        send(CD1_host, "CD1.pid_velx['D']={}".format(d))
-        send(CD1_host,"log(CD1.pid_velx)")
+        send(CD2_host, "CD2.pid_velx['P']={}".format(p))
+        send(CD2_host, "CD2.pid_velx['I']={}".format(i))
+        send(CD2_host, "CD2.pid_velx['D']={}".format(d))
+        send(CD2_host,"log(CD2.pid_velx)")
 
     def pidy_set(self):
         pid = str(self.pidy.get())
         p, i, d = pid.split(',')
-        send(CD1_host, "CD1.pid_vely['P']={}".format(p))
-        send(CD1_host, "CD1.pid_vely['I']={}".format(i))
-        send(CD1_host, "CD1.pid_vely['D']={}".format(d))
-        send(CD1_host,"log(CD1.pid_vely)")
+        send(CD2_host, "CD2.pid_vely['P']={}".format(p))
+        send(CD2_host, "CD2.pid_vely['I']={}".format(i))
+        send(CD2_host, "CD2.pid_vely['D']={}".format(d))
+        send(CD2_host,"log(CD2.pid_vely)")
 
     def pidz_set(self):
         pid = str(self.pidz.get())
         p, i, d = pid.split(',')
-        send(CD1_host, "CD1.pid_velz['P']={}".format(p))
-        send(CD1_host, "CD1.pid_velz['I']={}".format(i))
-        send(CD1_host, "CD1.pid_velz['D']={}".format(d))
-        send(CD1_host,"log(CD1.pid_velz)")
+        send(CD2_host, "CD2.pid_velz['P']={}".format(p))
+        send(CD2_host, "CD2.pid_velz['I']={}".format(i))
+        send(CD2_host, "CD2.pid_velz['D']={}".format(d))
+        send(CD2_host,"log(CD2.pid_velz)")
 
 
     # def custom_goto(self):

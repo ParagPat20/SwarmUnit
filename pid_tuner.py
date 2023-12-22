@@ -85,7 +85,7 @@ def update_plot(frame):
 # Set up the PyZMQ subscriber
 context = zmq.Context()
 subscriber = context.socket(zmq.SUB)
-subscriber.connect("tcp://{}:5555".format(CD1_host))  # Update with your PUB socket address
+subscriber.connect("tcp://{}:5555".format(CD2_host))  # Update with your PUB socket address
 subscriber.setsockopt_string(zmq.SUBSCRIBE, "")  # Subscribe to all topics
 
 # Set up animation to update the plot

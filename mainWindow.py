@@ -2,6 +2,7 @@ from pathlib import Path
 from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage, Toplevel, Frame, messagebox, StringVar, font
 from dashboard import Dashboard
 from control import Control
+from edit_mission import EDIT
 from Initialization import Initialize
 from formation import Formation
 import login
@@ -231,7 +232,7 @@ class MainWindow(Toplevel):
 
             "init": Initialize(self),
             "dash": Dashboard(self),
-            "ctrl": Control(self),
+            "ctrl": EDIT(self),
             "form": Formation(self)
             
         }
@@ -245,7 +246,6 @@ class MainWindow(Toplevel):
     
     def place_sidebar_indicator(self):
         pass
-
 
 
     def logout(self):
@@ -265,7 +265,7 @@ class MainWindow(Toplevel):
         elif name == 'init':
             self.current_window = Initialize(self)
         elif name == 'ctrl':
-            self.current_window = Control(self)
+            self.current_window = EDIT(self)
         elif name == 'form':
             self.current_window = Formation(self)
         

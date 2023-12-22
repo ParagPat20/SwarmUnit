@@ -15,8 +15,8 @@ context = zmq.Context()  # Create a ZeroMQ context
 connected_hosts = set()
 clients = {}
 pc = '192.168.207.101'
-coordslat = 0.0
-coordslon = 0.0
+coordslat = 22.2868240
+coordslon = 73.3639982
 import random
 
 def send(host, immediate_command_str):
@@ -221,6 +221,8 @@ class Logger:
             self.log_text_sec.see("end")
 
     def logger_server(self):
+        global coordslat
+        global coordslon
         context = zmq.Context()
         socket = context.socket(zmq.PULL)
         socket.bind("tcp://*:5556")  # The server binds to a specific address and port
@@ -242,11 +244,12 @@ class Logger:
                 if message.startswith("sec "):
                     logger.log_sec(message[4:])
                 elif message.startswith("lat "):
-                    coordslat = message[4:]
-                    coordslat = float(coordslat)
+                    coordslat = message
+                    coordslat = float(coordslat[4:])
                     logger.log_sec(coordslat)
                 elif message.startswith("lon "):
-                    coordslon = float(message[4:])
+                    coordslon = message
+                    coordslon = float(coordslon[4:])
                     logger.log_sec(coordslon)
                 else:
                     logger.log(message)
