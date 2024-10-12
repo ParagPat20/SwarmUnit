@@ -146,7 +146,7 @@ class Initialize(Frame):
                 logger.log("\nCD2 initialized")
 
             if 'CD3' in drone_list and not self.CD3_initialized:
-                send(CD2_host,'initialize_CD3()')
+                send(CD3_host,'initialize_CD3()')
                 self.CD3_initialized = True
                 logger.log("\nCD3 initialized")
 

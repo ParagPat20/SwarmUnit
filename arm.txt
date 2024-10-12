@@ -1,0 +1,5 @@
+send(MCU_host,'MCU.arm("STABILIZE")')
+send(CD1_host,'CD1.arm("STABILIZE")')
+time.sleep(15)
+send(MCU_host,'MCU.arm("STABILIZE")')
+send(CD1_host,'CD1.arm("STABILIZE")')

@@ -137,6 +137,24 @@ class MainWindow(Toplevel):
             height=47.0
         )
 
+        self.button_image_5 = PhotoImage(
+            file=relative_to_assets("button_4.png"))
+        self.miss_btn = Button(
+            self.canvas,
+            image=self.button_image_5,
+            borderwidth=0,
+            highlightthickness=0,
+            command=lambda: self.handle_btn_press(self.miss_btn, "miss"),
+            cursor='hand2', activebackground="#5E95FF",
+            relief="flat"
+        )
+        self.miss_btn.place(
+            x=7.0,
+            y=340.0,
+            width=193.0,
+            height=47.0
+        )
+
         button_image_5 = PhotoImage(
             file=relative_to_assets("button_5.png"))
         self.logout_btn = Button(
@@ -205,8 +223,8 @@ class MainWindow(Toplevel):
 
         # Pass the log_text to the logger
         logger.set_log_text(self.log_text)
-        logger_thread = threading.Thread(target=logger.logger_server)
-        logger_thread.start()
+        logging_thread = threading.Thread(target=start_logging_in_background)
+        logging_thread.start()
 
         image_image_1 = PhotoImage(
             file=relative_to_assets("image_1.png"))
@@ -232,12 +250,16 @@ class MainWindow(Toplevel):
 
             "init": Initialize(self),
             "dash": Dashboard(self),
-            "ctrl": EDIT(self),
-            "form": Formation(self)
+            "ctrl": Control(self),
+            "form": Formation(self),
+            "miss": EDIT(self)
             
         }
 
         self.sidebar_indicator.place(x=0, y=133)
+        self.current_window.place(x=200, y=390, width=1300.0, height=370.0)
+        self.animate_slide_in()
+
 
 
         self.current_window.tkraise()
@@ -265,9 +287,11 @@ class MainWindow(Toplevel):
         elif name == 'init':
             self.current_window = Initialize(self)
         elif name == 'ctrl':
-            self.current_window = EDIT(self)
+            self.current_window = Control(self)
         elif name == 'form':
             self.current_window = Formation(self)
+        elif name == 'miss':
+            self.current_window = EDIT(self)
         
         # Place the new window
         self.current_window.place(x=200, y=390, width=1300.0, height=370.0)

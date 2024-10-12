@@ -408,7 +408,7 @@ class Formation(Frame):
 
             logger.log("Sending to MCU X:{}, Y:{}, Z:{} for {} seconds".format(x, y, z, time))
             
-            send(MCU_host, 'MCU.send_ned_velocity({}, {}, {}, {})'.format(x, y, z, time))
+            send(MCU_host, 'MCU.send_pos({}, {}, {}, {})'.format(x, y, z, time))
                     
         except Exception as e:
             logger.log("here_error{}".format(e))
@@ -425,7 +425,7 @@ class Formation(Frame):
 
             logger.log("Sending to CD1 X:{}, Y:{}, Z:{} for {} seconds".format(x, y, z, time))
             
-            send(CD1_host, 'CD1.send_ned_velocity({}, {}, {}, {})'.format(x, y, z, time))
+            send(CD1_host, 'CD1.send_pos({}, {}, {}, {})'.format(x, y, z, time))
                     
         except Exception as e:
             logger.log("here_error{}".format(e))
@@ -442,7 +442,7 @@ class Formation(Frame):
 
             logger.log("Sending to CD2 X:{}, Y:{}, Z:{} for {} seconds".format(x, y, z, time))
             
-            send(CD2_host, 'CD2.send_ned_velocity({}, {}, {}, {})'.format(x, y, z, time))
+            send(CD2_host, 'CD2.send_pos({}, {}, {}, {})'.format(x, y, z, time))
                     
         except Exception as e:
             logger.log("here_error{}".format(e))

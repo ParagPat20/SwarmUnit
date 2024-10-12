@@ -1,7 +1,10 @@
 from pathlib import Path
 from tkinter import Canvas, Button, PhotoImage, Frame
 from saves import *
-
+import tkinter as tk
+from PIL import Image, ImageTk  # For image display
+import zmq  # For socket communication
+import cv2  # For video capture
 OUTPUT_PATH = Path(__file__).parent
 ASSETS_PATH = OUTPUT_PATH / Path("./control_assets")
 
@@ -272,7 +275,7 @@ class Control(Frame):
             fill="#D9D9D9",
             outline="")
 
-        self.canvas.create_rectangle(
+        rect3=self.canvas.create_rectangle(
             896.0,
             203.0,
             1146.0,
@@ -280,7 +283,3 @@ class Control(Frame):
             fill="#D9D9D9",
             outline="")
         
-
-############ CAMERA IS REMAINING #############
-
-

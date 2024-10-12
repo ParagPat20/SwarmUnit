@@ -1,6 +1,7 @@
 from pathlib import Path
-from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage, Frame, OptionMenu, StringVar, Listbox, Scrollbar
+from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage, Frame, OptionMenu, StringVar, Listbox, Scrollbar, font
 from saves import *
+from tkinter import filedialog
 
 OUTPUT_PATH = Path(__file__).parent
 ASSETS_PATH = OUTPUT_PATH / Path("./Edit_Mission")
@@ -133,7 +134,7 @@ class EDIT(Frame):
             font=("Inter ExtraLight", 15 * -1)
         )
 
-        self.drone_names = ["Drone1", "Drone2", "Drone3"]  # Add your drone names here
+        self.drone_names = ["MCU", "CD1", "CD2"]  # Add your drone names here
         self.selected_drone = StringVar(self)
         self.selected_drone.set(self.drone_names[0])
         self.drone_menu = OptionMenu(self.canvas, self.selected_drone, *self.drone_names)
@@ -150,7 +151,7 @@ class EDIT(Frame):
         self.entry_1 = Entry(self.canvas,
             bd=0,
             bg="#1D1C1D",
-            fg="#000716",
+            fg="#FFFFFF",
             highlightthickness=0
         )
         self.entry_1.place(
@@ -187,7 +188,7 @@ class EDIT(Frame):
         self.entry_2 = Entry(self.canvas,
             bd=0,
             bg="#1D1C1D",
-            fg="#000716",
+            fg="#FFFFFF",
             highlightthickness=0
         )
         self.entry_2.place(
@@ -224,7 +225,7 @@ class EDIT(Frame):
         self.entry_3 = Entry(self.canvas,
             bd=0,
             bg="#1D1C1D",
-            fg="#000716",
+            fg="#FFFFFF",
             highlightthickness=0
         )
         self.entry_3.place(
@@ -300,7 +301,101 @@ class EDIT(Frame):
         self.scrollbar.config(command=self.path_listbox.yview)
 
         self.path_listbox.bind("<Double-Button-1>", self.on_listbox_double_click)
+        self.send_to_pi_button = Button(
+            self.canvas,
+            text="Send to Pi Zero",
+            command=lambda: self.send_to_pi(),
+            bg="#2A282C",
+            fg="#FFFFFF",
+            relief="flat",
+            activebackground="#2A282C"
+        )
+        self.send_to_pi_button.place(
+            x=950.0,
+            y=250.0,
+            width=150.0,
+            height=30.0
+        )
+        self.open_file_button = Button(
+            self.canvas,
+            text="Open File",
+            command=self.open_file,
+            bg="#2A282C",
+            fg="#FFFFFF",
+            relief="flat",
+            activebackground="#2A282C"
+        )
+        self.open_file_button.place(
+            x=450.0,
+            y=150.0,
+            width=100.0,
+            height=30.0
+        )
 
+    def open_file(self):
+        # Open a file dialog to select the file to open
+        file_path = filedialog.askopenfilename(
+            initialdir=OUTPUT_PATH,
+            title="Select File",
+            filetypes=[("Text Files", "*.txt"), ("All Files", "*.*")]
+        )
+
+        if file_path:
+            # Read the commands from the selected file
+            with open(file_path, 'r') as file:
+                commands = file.readlines()
+
+            # Set the mission name from the file name
+            mission_name = Path(file_path).stem
+            self.mission_name_entry.delete(0, 'end')
+            self.mission_name_entry.insert(0, mission_name)
+
+            # Display the commands in the Listbox
+            self.paths = [command.strip() for command in commands]
+            self.display_paths()
+    def send_to_pi(self):
+        threading.Thread(target=self.send_to_pi_thread).start()
+
+    def send_to_pi_thread(self):
+        # Get the mission name from the entry widget
+        mission_name = self.mission_name_entry.get()
+
+        if not mission_name:
+            logger.log("Mission name is required.")
+            return
+
+        # Specify the file path to save the data
+        file_path = OUTPUT_PATH / f"{mission_name}.txt"
+
+        # Open the file in write mode and save the paths
+        with open(file_path, 'w') as file:
+            for path in self.paths:
+                file.write(path + "\n")
+        logger.log("File Path Successfully achieved\n{}".format(file_path))
+        send(MCU_host,"file_server()")
+        time.sleep(1)
+        try:
+            context = zmq.Context()
+            socket = context.socket(zmq.REQ)
+            logger.log("Made Socket")
+
+            # Change 'your_pi_zero_ip' and 'your_port' to the actual IP and port of your Pi Zero
+            socket.connect("tcp://{}:5577".format(MCU_host))
+            socket.send_string(mission_name)
+            logger.log("Sent Filename")
+            socket.recv_string()
+            logger.log("Filename sent successfully")
+
+            with open(file_path, 'rb') as file:
+                file_data = file.read()
+                socket.send(file_data)
+
+            response = socket.recv_string()
+            logger.log(response)
+
+        except Exception as e:
+            logger.log(f"Error sending file to Pi Zero: {e}")
+            print(f"Error sending file to Pi Zero: {e}")
 
     def add_path(self):
         drone_name = self.selected_drone.get()
@@ -308,15 +403,19 @@ class EDIT(Frame):
         y_value = self.entry_2.get()
         t_value = self.entry_3.get()
         extra_cmd = self.extra_cmd_entry.get()
-        if extra_cmd:
-            path_info += f", {extra_cmd}"
+        if extra_cmd and drone_name:
+            extra_cmd=str(extra_cmd)
+            if extra_cmd.startswith("sleep"):
+                path_info = f"time.{extra_cmd}"
+            else:
+                path_info = f"send({drone_name}_host,'{drone_name}.{extra_cmd}')"
             self.extra_cmd_entry.delete(0, 'end')
-            path_info = f""
             self.paths.append(path_info)
+            self.display_paths()
 
         if drone_name and x_value and y_value and t_value:
             # Save the path information
-            path_info = f"send({drone_name}_host,{drone_name}.send_ned_velocity({x_value},{y_value},0,{t_value})"
+            path_info = f"send({drone_name}_host,'{drone_name}.send_pos({x_value},{y_value},0,{t_value})')"
             
             # Include extra command if provided
             

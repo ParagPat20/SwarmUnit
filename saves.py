@@ -3,72 +3,69 @@ import time
 import threading
 import tkintermapview
 import tkinter
+import logging
+
 
 MCU_host = '192.168.207.122'
 CD1_host = '192.168.207.43'
 CD2_host = '192.168.207.225'
+CD3_host = CD2_host
+
 cmd_port = 12345
 ctrl_port = 54321
 selected_drone = None
 context = zmq.Context()  # Create a ZeroMQ context
-
+poller = zmq.Poller
 connected_hosts = set()
 clients = {}
 pc = '192.168.207.101'
 coordslat = 22.2868240
 coordslon = 73.3639982
+cap = None
 import random
 
 def send(host, immediate_command_str):
     global connected_hosts
     global clients
-    global context  # Use the global context
+
     try:
         if host not in connected_hosts:
-            logger.log('New Host')
-            # Remove the local redefinition of context
-            socket1 = context.socket(zmq.PUSH)
-            socket1.connect(f"tcp://{host}:12345")
-            socket2 = context.socket(zmq.PUSH)
-            socket2.connect(f"tcp://{host}:12345")
-            socket3 = context.socket(zmq.PUSH)
-            socket3.connect(f"tcp://{host}:12345")
-            socket4 = context.socket(zmq.PUSH)
-            socket4.connect(f"tcp://{host}:12345")
-            socket5 = context.socket(zmq.PUSH)
-            socket5.connect(f"tcp://{host}:12345")
-            socket6 = context.socket(zmq.PUSH)
-            socket6.connect(f"tcp://{host}:12345")
-            clients[host] = [socket1, socket2, socket3, socket4, socket5, socket6]
-            connected_hosts.add(host)
-            logger.log("Clients {} ".format(clients))
-        immediate_command_str = str(immediate_command_str)
-        random_socket = random.choice(clients[host])
-        random_socket.send_string(immediate_command_str)
-        logger.log("Command sent successfuly")
-    except Exception as e:
-        logger.log(f"PC Host: {e}")
+            connect_and_register_socket(host)
 
-# def recv_status(remote_host, status_port, param=None):
-#     client_socket = context.socket(zmq.REQ)  # Use REQ pattern for receiving status
-#     client_socket.connect(f"tcp://{remote_host}:{status_port}")
+            immediate_command_str = str(immediate_command_str)
 
-#     try:
-#         status_msg_str = client_socket.recv_string()
-#         battery, gs, lat, lon, alt, heading = status_msg_str.split(',')
-#         gs = gs[:6]
+        clients[host].send(immediate_command_str.encode(), zmq.NOBLOCK)  # Non-blocking send
+        logger.log("Command sent successfully to {}".format(host))
 
-#         if param == 'battery':
-#             return battery
-#         elif param == 'gs':
-#             return gs
-#         else:
-#             return status_msg_str
-    
-#     except zmq.error.ZMQError as error_msg:
-#         logger.log(f'PC: {time.ctime()} - Caught exception : {error_msg}')
-#         logger.log(f'PC: {time.ctime()} - CLIENT_request_status({remote_host}) is not executed!')
-    
+    except zmq.error.Again:  # Handle non-blocking send errors
+        poller.register(clients[host], zmq.POLLOUT)  # Wait for socket readiness
+        socks = dict(poller.poll(1000))
+        if clients[host] in socks and socks[clients[host]] == zmq.POLLOUT:
+            clients[host].send_string(immediate_command_str)  # Retry sending
+        else:
+            logger.log("Socket not ready for {}, reconnecting...".format(host))
+            reconnect_socket(host)
+
+    except zmq.error.ZMQError as e:
+        logger.log("PC Host {host}: {}".format(e))
+        reconnect_socket(host)  # Attempt reconnection
+
+def connect_and_register_socket(host):
+    socket = context.socket(zmq.PUSH)
+    socket.setsockopt(zmq.SNDHWM, 1000)  # Allow up to 1000 queued messages
+    socket.connect(f"tcp://{host}:12345")
+    clients[host] = socket
+    connected_hosts.add(host)
+    logger.log("Clients: {}".format(clients))
+
+def reconnect_socket(host):
+    socket = clients[host]
+    socket.close()
+    socket = context.socket(zmq.PUSH)
+    socket.connect(f"tcp://{host}:12345")
+    clients[host] = socket
+    socks = dict(poller.poll(1000))  # Wait for write events with timeout
+
 
 def recv_status(remote_host,status_port, param=None):
     logger.log("just chilling")
@@ -197,6 +194,8 @@ class Logger:
         self.cd1_status = False
         self.cd2_status = False
         self.log_thread = None
+        self.context = zmq.Context()
+        self.router_socket = self.context.socket(zmq.ROUTER)
 
     def set_log_text(self, log_text):
         self.log_text = log_text
@@ -220,47 +219,55 @@ class Logger:
             self.log_text_sec.configure(state="disabled")
             self.log_text_sec.see("end")
 
-    def logger_server(self):
-        global coordslat
-        global coordslon
-        context = zmq.Context()
-        socket = context.socket(zmq.PULL)
-        socket.bind("tcp://*:5556")  # The server binds to a specific address and port
-        logger.log("Server Started")
-        logger.log_sec("Security Server going ON!")
-        def wifi_status_server():
-            context = zmq.Context()
-            server = context.socket(zmq.REP)
-            server.bind('tcp://*:8888')
-
-            while True:
-                message = server.recv_string()
-                response = "Connected"
-                server.send_string(response)
-        threading.Thread(target=wifi_status_server).start()
+    def start_logging(self):
         try:
+            self.log("LOGGING SERVER STARTED!")
+            self.log_sec("WAITING FOR SECURITY PARAMS!!!")
+            self.log_thread = threading.Thread(target=self.handle_messages)
+            self.log_thread.start()
+            self.router_socket.bind("tcp://*:5556")
+            socket = context.socket(zmq.REP)  # REP socket for responding to clients
+            socket.bind("tcp://*:8888")  # Bind to port 8888 (matching client configuration)
             while True:
-                message = socket.recv_string()
-                if message.startswith("sec "):
-                    logger.log_sec(message[4:])
-                elif message.startswith("lat "):
-                    coordslat = message
-                    coordslat = float(coordslat[4:])
-                    logger.log_sec(coordslat)
-                elif message.startswith("lon "):
-                    coordslon = message
-                    coordslon = float(coordslon[4:])
-                    logger.log_sec(coordslon)
-                else:
-                    logger.log(message)
-        except KeyboardInterrupt:
-            pass
-        finally:
-            socket.close()
-            context.term()
+                message = socket.recv()  # Receive request from client
+                try:
+                    socket.send_string("Connected")  # Send response to client
+                except Exception as e:
+                    print(f"Error checking Wi-Fi: {e}")
+                    socket.send_string("Error")  # Notify client of an error
+        except zmq.ZMQError as e:
+            logging.error("Error connecting to server: %s", e)
 
+    def handle_messages(self):
+        while True:
+            try:
+                message = self.router_socket.recv_multipart()
+                message = message[1].decode()
+                message = str(message)
+                try:
+                    # Process messages appropriately
+                    if message.startswith("sec "):
+                        self.log_sec(message[4:])
+                    elif message.startswith("lat "):
+                        coordslat = float(message[4:])
+                        self.log_sec(coordslat)
+                    elif message.startswith("lon "):
+                        coordslon = float(message[4:])
+                        self.log_sec(coordslon)
+                    else:
+                        self.log(message)
+                except Exception as e:
+                    logging.error("Error processing message: %s", e)
+            except zmq.ZMQError as e:
+                if e.errno != zmq.ETERM:
+                    logging.error("Error receiving message: %s", e)
 
+  
 logger = Logger()
+def start_logging_in_background():
+    logger.start_logging()
+
+
 class MapApplication():
     def __init__(self, root):
         #self.root = root
@@ -270,8 +277,6 @@ class MapApplication():
         self.map_widget = tkintermapview.TkinterMapView(root)
         self.map_widget.place(relx=0.5, rely=0.5, anchor=tkinter.CENTER)
         self.coords = (coordslat,coordslon)
-        print(coordslat)
-        print(coordslon)
         logger.log_sec(str(self.coords))
         self.map_widget.set_position(self.coords[0], self.coords[1])
         self.map_widget.set_zoom(15)

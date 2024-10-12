@@ -1,0 +1,7 @@
+send(CD1_host,'CD1.takeoff()')
+time.sleep(8)
+send(CD1_host,'CD1.poshold_guided()')
+time.sleep(3)
+send(CD1_host,'CD1.send_ned_velocity(0.7,-0.2,0,5)')
+time.sleep(8)
+send(CD1_host,'CD1.land()')
